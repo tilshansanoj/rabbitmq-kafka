@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Runtime logs and artifacts
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Coverage/test artifacts
+coverage/
+.nyc_output/
+
+# Monitoring state
+monitoring/grafana/data/
