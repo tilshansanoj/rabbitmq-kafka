@@ -1,0 +1,60 @@
+{
+  "info": {
+    "_postman_id": "a9c2bc43-3d87-43de-a978-0eff2d7e38d1",
+    "name": "Order Event Pipeline",
+    "description": "Postman collection for the 06-project Order Event Pipeline demo.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Order Service",
+      "item": [
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"customer-123\",\n  \"items\": [\n    {\n      \"sku\": \"WIDGET-1\",\n      \"qty\": 2\n    },\n    {\n      \"sku\": \"GADGET-5\",\n      \"qty\": 1\n    }\n  ],\n  \"totalAmount\": 149.99\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://{{host}}:{{port}}/order",
+              "protocol": "http",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "order"
+              ]
+            },
+            "description": "Creates a new order. This publishes the event to Kafka and task messages to RabbitMQ."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "host",
+      "value": "localhost"
+    },
+    {
+      "key": "port",
+      "value": "3000"
+    }
+  ]
+}

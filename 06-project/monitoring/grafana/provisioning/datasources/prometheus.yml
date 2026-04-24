@@ -1,0 +1,17 @@
+apiVersion: 1
+
+# Clears any old "Prometheus" row in grafana.db whose UID no longer matches provisioning
+# (avoids Grafana 11/12 startup failure: "Datasource provisioning error: data source not found").
+deleteDatasources:
+  - name: Prometheus
+    orgId: 1
+
+datasources:
+  - name: Prometheus
+    uid: prom-orders-pipeline
+    orgId: 1
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true

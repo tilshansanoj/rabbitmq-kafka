@@ -465,7 +465,40 @@ Stop the analytics service. Place 20 orders. Check Kafka UI at http://localhost:
 
 ---
 
-## 6.11 Key Learnings from this Project
+## 6.11 Load Testing for 10,000 Orders
+
+Use the built-in load script (no extra dependencies):
+
+```bash
+# defaults: 10,000 orders, concurrency 100
+npm run test:load
+```
+
+### Optional tuning via environment variables
+
+```bash
+# Bash example
+LOAD_TEST_ORDERS=10000 LOAD_TEST_CONCURRENCY=150 npm run test:load
+```
+
+PowerShell example:
+
+```powershell
+$env:LOAD_TEST_ORDERS="10000"
+$env:LOAD_TEST_CONCURRENCY="150"
+npm run test:load
+```
+
+### Throughput tuning knobs
+
+- `EMAIL_PREFETCH` (default `50`) for `email-worker`
+- `INVOICE_PREFETCH` (default `30`) for `invoice-worker`
+- `KAFKA_MAX_RETRIES` / `RABBIT_MAX_RETRIES` for publish resilience
+- Scale workers by running multiple terminals for `npm run email` and `npm run invoice`
+
+---
+
+## 6.12 Key Learnings from this Project
 
 | Observation | Why |
 |-------------|-----|
@@ -475,6 +508,58 @@ Stop the analytics service. Place 20 orders. Check Kafka UI at http://localhost:
 | Multiple invoice workers share the load | Competing consumers on same RabbitMQ queue — each message once |
 | Failed email goes to dead queue, not lost | RabbitMQ DLX catches nack'd messages |
 | Orders for same customer are ordered | Kafka key-based partitioning ensures order within a partition |
+
+---
+
+## 6.13 Grafana Dashboard (Kafka + RabbitMQ)
+
+Monitoring is included in `docker-compose.yml` with:
+
+- `kafka-exporter` on `http://localhost:9308/metrics`
+- `rabbitmq-exporter` on `http://localhost:9419/metrics`
+- `prometheus` on `http://localhost:9090`
+- `grafana` on `http://localhost:3001` (user: `admin`, pass: `admin`)
+
+After `docker compose up -d`, open Grafana and go to:
+
+- **Dashboards** → **Order Pipeline** → **Order Pipeline - Kafka & RabbitMQ**
+
+The dashboard includes:
+
+- Kafka ingest rate and consumer lag
+- RabbitMQ queue depth, unacked messages, and consumer count
+- Basic exporter health signal
+
+### Grafana: “Datasource not found” or empty panels
+
+The dashboard panels reference Prometheus with **`uid: prom-orders-pipeline`**. The provisioned datasource must use that same UID (see `monitoring/grafana/provisioning/datasources/prometheus.yml`). The stack pins **Grafana 11.3.x** because `grafana:latest` (Grafana 12) has had provisioning regressions for some setups.
+
+After pulling these changes, restart Grafana so provisioning re-runs:
+
+```bash
+docker compose up -d --force-recreate grafana
+```
+
+If you still see a broken datasource reference, open **Connections → Data sources** in Grafana: remove any duplicate “Prometheus” entries that were created before the UID was set, then restart Grafana again.
+
+Confirm Prometheus is scraping targets at `http://localhost:9090/targets` (both exporters should be **UP**).
+
+---
+
+## 6.14 Troubleshooting: `Connection timeout` to `kafka:9092` when running `npm run setup`
+
+If Kafka advertised the **internal** listener on the same port you publish to the host (`9092`), the broker metadata tells clients to use `kafka:9092`. That hostname only works **inside** Docker, so Node on Windows/WSL times out.
+
+`docker-compose.yml` maps host `9092` to the **PLAINTEXT_HOST** listener (`localhost:9092` in metadata) and keeps **PLAINTEXT** on `29092` for containers (e.g. `kafka-exporter`).
+
+After changing listeners, recreate Kafka:
+
+```bash
+docker compose down
+docker compose up -d
+# wait until kafka is healthy, then:
+npm run setup
+```
 
 ---
 

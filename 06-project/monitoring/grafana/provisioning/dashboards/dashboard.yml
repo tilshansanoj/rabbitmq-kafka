@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: "Order Pipeline Dashboards"
+    orgId: 1
+    folder: "Order Pipeline"
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /var/lib/grafana/dashboards
